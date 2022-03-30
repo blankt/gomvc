@@ -1,14 +1,14 @@
 package routes
 
 import (
-	"github.com/ohko/hst"
+	"git.zx-tech.net/ljhua/hst"
 	"simpleMVC/go/controller"
 )
 
 func SetRouter() *hst.HST {
 	h := hst.New(nil)
 
-	h.HandleFunc("/addUser", controller.CreateController)
-	h.HandleFunc("/getUserList", controller.GetUserList)
+	h.POST("/addUser", controller.CreateController)
+	h.GET("/getUserList", controller.GetUserList)
 	return h
 }

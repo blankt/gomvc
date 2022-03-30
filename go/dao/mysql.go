@@ -2,6 +2,7 @@ package dao
 
 import (
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-yaml/yaml"
 	"github.com/jinzhu/gorm"
 	"io/ioutil"
@@ -14,9 +15,11 @@ type conf struct {
 	Url      string `yaml:"url"`
 	UserName string `yaml:"userName"`
 	Password string `yaml:"password"`
-	DbName   string `yaml:"dbName"`
+	DbName   string `yaml:"dbname"`
 	Port     string `yaml:"post"`
 }
+
+const DRIVER = "mysql"
 
 func (c *conf) getConf() *conf {
 	yamlFile, err := ioutil.ReadFile("resources/application.yaml")
@@ -45,7 +48,7 @@ func InitMySql() (err error) {
 		conf.DbName,
 	)
 	//连接数据库
-	SqlSession, err = gorm.Open("mysql", dsn)
+	SqlSession, err = gorm.Open(DRIVER, dsn)
 	if err != nil {
 		panic(err)
 	}

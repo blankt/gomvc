@@ -3,7 +3,7 @@ package controller
 import "C"
 import (
 	"encoding/json"
-	"github.com/ohko/hst"
+	"git.zx-tech.net/ljhua/hst"
 	"io/ioutil"
 	"log"
 	"net/http"

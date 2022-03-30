@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	//初始化数据库连接
 	err := dao.InitMySql()
 	if err != nil {
 		panic(err)
