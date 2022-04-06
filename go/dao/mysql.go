@@ -53,6 +53,7 @@ func InitMySql() (err error) {
 		panic(err)
 	}
 	//验证数据库连接是否成功，若成功，则无异常
+
 	return SqlSession.DB().Ping()
 }
 

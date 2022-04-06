@@ -4,6 +4,7 @@ import "C"
 import (
 	"encoding/json"
 	"git.zx-tech.net/ljhua/hst"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -36,7 +37,7 @@ func CreateController(c *hst.Context) {
 		}{error: err2})
 	} else {
 		c.JSON(http.StatusOK, hst.JSONData{
-			No: 200,
+			No: 0,
 			Data: struct {
 				msg  string
 				data entity.User
@@ -45,14 +46,55 @@ func CreateController(c *hst.Context) {
 		})
 	}
 
+	////日志输出
+	//c.Str("llll", "awaa")
+
 }
 
 //查询所有用户
 func GetUserList(c *hst.Context) {
+	//计算耗时
+	f := hst.AggHandleTime(c)
+	defer f()
+
 	result, err := service.GetAllUser()
 	if err != nil {
-		c.JSON2(http.StatusBadRequest, 400, err)
+		c.JSON2(http.StatusBadRequest, 0, err)
 	} else {
-		c.JSON2(http.StatusOK, 200, result)
+		c.JSON2(http.StatusOK, 0, result)
+	}
+}
+
+func Login(c *hst.Context) {
+	if c.R.Method == "GET" {
+		t, _ := template.ParseFiles("login.gtpl")
+		t.Execute(c.W.ResponseWriter, nil)
+	} else {
+		c.R.ParseForm()
+
+		username := c.R.FormValue("username")
+		password := c.R.FormValue("password")
+
+		quesUser, err := service.GetUserByName(username)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, err)
+		}
+		if quesUser.Password != password {
+			c.JSON(http.StatusBadRequest, "用户密码错误")
+		}
+
+		//登录操作成功 用户信息写入session 返回给客户端
+		c.SessionSet("userInfo", quesUser)
+
+		c.JSON(http.StatusOK, struct { //常见错误
+			Id   int
+			Name string
+			Msg  string
+		}{
+			Id:   quesUser.Id,
+			Name: quesUser.Name,
+			Msg:  "登录成功",
+		})
 	}
 }
