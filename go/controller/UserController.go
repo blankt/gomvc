@@ -2,15 +2,22 @@ package controller
 
 import "C"
 import (
+	"crypto/md5"
 	"encoding/json"
+	"fmt"
 	"git.zx-tech.net/ljhua/hst"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"simpleMVC/go/entity"
 	"simpleMVC/go/service"
 )
+
+var salt1 = "@#$%"
+var salt2 = "^&*()"
 
 //新增用户
 func CreateController(c *hst.Context) {
@@ -30,6 +37,21 @@ func CreateController(c *hst.Context) {
 		return
 	}
 
+	//判断邮箱是否合理
+	if m, _ := regexp.MatchString(`^([\w\.\_]{2,10})@(\w{1,}).([a-z]{2,4})$`, user.Email); !m {
+		c.JSON(http.StatusBadRequest, "邮箱格式有误")
+	}
+
+	//判断该用户名是否已经注册
+	user1, _ := service.GetUserByName(user.Name)
+	if user1 != nil {
+		c.JSON(http.StatusBadRequest, "该用户名已经被注册")
+	}
+
+	// 将密码加密存入数据库
+	pwdMd5 := encryption(user.Password)
+	user.Password = pwdMd5
+
 	err2 := service.CreateUser(&user)
 	if err2 != nil {
 		c.JSON(http.StatusBadRequest, struct {
@@ -39,10 +61,10 @@ func CreateController(c *hst.Context) {
 		c.JSON(http.StatusOK, hst.JSONData{
 			No: 0,
 			Data: struct {
-				msg  string
-				data entity.User
-			}{msg: "success",
-				data: user},
+				Msg  string
+				Data entity.User
+			}{Msg: "success",
+				Data: user},
 		})
 	}
 
@@ -70,17 +92,23 @@ func Login(c *hst.Context) {
 		t, _ := template.ParseFiles("login.gtpl")
 		t.Execute(c.W.ResponseWriter, nil)
 	} else {
-		c.R.ParseForm()
+		//c.R.ParseForm()
+		//username := c.R.Form["username"]
 
-		username := c.R.FormValue("username")
+		username := c.R.FormValue("username") //调用formvalue会默认提前调用parseform 但是只会返回同名参数的第一个
 		password := c.R.FormValue("password")
 
 		quesUser, err := service.GetUserByName(username)
+		if quesUser == nil {
+			c.JSON(http.StatusBadRequest, "未找到该用户")
+		}
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, err)
 		}
-		if quesUser.Password != password {
+
+		pwdMD5 := encryption(password)
+		if quesUser.Password != pwdMD5 {
 			c.JSON(http.StatusBadRequest, "用户密码错误")
 		}
 
@@ -97,4 +125,21 @@ func Login(c *hst.Context) {
 			Msg:  "登录成功",
 		})
 	}
+}
+
+//将密码进行MD5加密
+func encryption(pwd string) string {
+	h := md5.New()
+
+	//将密码进行加密
+	io.WriteString(h, pwd)
+	pwdmd5 := fmt.Sprintf("%x", h.Sum(nil))
+
+	//对密码加盐进行进一步加密
+	io.WriteString(h, salt1)
+	io.WriteString(h, pwdmd5)
+	io.WriteString(h, salt2)
+
+	lastPwd := fmt.Sprintf("%x", h.Sum(nil))
+	return lastPwd
 }
