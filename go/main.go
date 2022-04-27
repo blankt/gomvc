@@ -35,6 +35,7 @@ func main() {
 	//go r.ListenTLS(":443", "ca.crt", "server.crt", "server.key")
 
     fmt.Println("测试CI")
+	fmt.Println("测试CI")
 
 	hst.Shutdown(time.Second*5, r)
 
