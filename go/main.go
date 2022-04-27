@@ -1,11 +1,13 @@
 package main
 
 import (
-	"git.zx-tech.net/ljhua/hst"
+	"fmt"
 	"simpleMVC/go/dao"
 	"simpleMVC/go/entity"
 	"simpleMVC/go/routes"
 	"time"
+
+	"git.zx-tech.net/ljhua/hst"
 )
 
 func main() {
@@ -31,6 +33,8 @@ func main() {
 	//	log.Printf("make file err")
 	//}
 	//go r.ListenTLS(":443", "ca.crt", "server.crt", "server.key")
+
+    fmt.Println("测试CI")
 
 	hst.Shutdown(time.Second*5, r)
 
